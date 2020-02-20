@@ -129,7 +129,7 @@ def executeJob(uri, job_location):
 	content = response.read()
 
 	# unzip to new folder
-	zipfile = ZipFile(io.StringIO(content))
+	zipfile = ZipFile(io.BytesIO(content))
 	dirname = 'sim' + job_location.replace('/', '_')
 	zipfile.extractall(f'./{dirname}')
 
