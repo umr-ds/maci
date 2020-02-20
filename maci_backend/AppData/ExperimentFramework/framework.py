@@ -25,7 +25,7 @@ def param(key, default = None):
 		if default is not None:
 			return default
 		else:
-			print 'Requested parameter %s is undefined. Aborting experiment...' % key
+			print(f'Requested parameter {key} is undefined. Aborting experiment...')
 			sys.exit(1) 
 	parameters.requestedParams.add(key)
 	return parameters.params[key]
@@ -41,7 +41,7 @@ def addLogfile(filename):
         warn(filename, "IO Error while adding logfile with MACI.")
 
 def addBinaryFile(filename):
-	print "adding binary file", filename
+	print(f"adding binary file {filename}")
 	try:
 		with open("binary_files.txt", 'w') as myfile:
 			myfile.write(filename + "\n")

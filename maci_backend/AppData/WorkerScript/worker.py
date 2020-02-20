@@ -1,5 +1,4 @@
-﻿#!/usr/bin/env python2
-# -*- coding: utf-8 -*-
+﻿#!/usr/bin/env python3
 
 from time import sleep, time
 import httplib
@@ -23,7 +22,7 @@ from threading import Thread
 try:
 	from monotonic import monotonic
 except ImportError:
-	print 'Module monotonic is not available. \'--maxidletime\' may not work properly if the system clock is changed.'
+	print('Module monotonic is not available. \'--maxidletime\' may not work properly if the system clock is changed.')
 	def monotonic():
 		return time()
 
@@ -69,11 +68,11 @@ def configure():
 	numberOfWorker = args.number_worker
 	executedInstallScripts = {}
 
-	print serverUri
-	print secondServerUri
-	print capabilities
-	print maxIdleTime
-	print maxSimTime
+	print(serverUri)
+	print(secondServerUri)
+	print(capabilities)
+	print(maxIdleTime)
+	print(maxSimTime)
 
 def registerSelfAsWorker(uri):
 	global tokenForUri
@@ -86,9 +85,9 @@ def registerSelfAsWorker(uri):
 		token = data['Token']
 			
 		tokenForUri[uri] = token
-		print 'Registered at server %s with token: %s' % (uri, token)
+		print(f'Registered at server {uri} with token: {token}')
 	else:
-		print 'Could not register as worker!'
+		print('Could not register as worker!')
 		pprint(response.read())
 
 def findAndExecutePendingJob(uri):
@@ -98,12 +97,12 @@ def findAndExecutePendingJob(uri):
 	location = response.getheader('Location')
 	if response.status == 401 or response.status == 403:
 		raise WorkerNotRegisteredException
-	elif response.status == 302 and location != None:
-		print 'Pending job found at', location, 'for', uri
+	elif response.status == 302 and location is not None:
+		print(f'Pending job found at {location} for {uri}')
 		executeJob(uri, location)
 		return True
 	else:
-		print 'No pending experiment at this time for', uri
+		print(f'No pending experiment at this time for {uri}')
 		return False
 
 def installScriptAlreadyExecuted(script):
@@ -119,7 +118,7 @@ def loadSimConfig(configFile):
 	try:    
 		with open(configFile, 'r') as file:
 			cfg=json.loads(file.read())
-			print "found config", cfg
+			print(f"found config {cfg}")
 			return cfg["timeout"] * 60
 	except IOError:
 		pass
@@ -127,32 +126,32 @@ def loadSimConfig(configFile):
 def executeJob(uri, job_location):
 	# download zip file with the experiment
 	server = httplib.HTTPConnection(uri)
-	server.request('GET', job_location + '/experiment.zip')
+	server.request('GET', f'{job_location}/experiment.zip')
 	response = server.getresponse()
 	content = response.read()
 
 	# unzip to new folder
 	zipfile = ZipFile(StringIO(content))
 	dirname = 'sim' + job_location.replace('/', '_')
-	zipfile.extractall('./' + dirname)
+	zipfile.extractall(f'./{dirname}')
 
-	logfile = open('./%s/log.txt' % dirname, 'w')
+	logfile = open(f'./{dirname}/log.txt', 'w')
 	logAppend = ""
 	result = 0
 
-	maxSimTimeConfig = loadSimConfig('./%s/config.json' % dirname)
+	maxSimTimeConfig = loadSimConfig(f'./{dirname}/config.json')
 	if maxSimTimeConfig is None:
-		print "No individuel timeout... Fallback to default of", maxSimTime
+		print(f"No individuel timeout... Fallback to default of {maxSimTime}")
 		maxSimTimeConfig = maxSimTime
 
 	# execute installation script (if it exists and has not been run yet)
-	if os.path.isfile('./%s/install.py' % dirname):
-		installScript = open('./%s/install.py' % dirname, 'r').read()
+	if os.path.isfile(f'./{dirname}/install.py'):
+		installScript = open(f'./{dirname}/install.py', 'r').read()
 
 		if installScriptAlreadyExecuted(installScript):
-			print "Install script already executed"
+			print("Install script already executed")
 		else:
-			print 'Installing...'
+			print('Installing...')
 			try:
 				result = subprocess32.call('python install.py',
 					shell=True,
@@ -161,15 +160,15 @@ def executeJob(uri, job_location):
 					timeout=maxSimTimeConfig,
 					cwd='./%s' % dirname)
 			except TimeoutExpired:
-				print "Timeout expired"
-				logAppend = "\nWorker Timeout Expired after " + str(maxSimTimeConfig) + "s"
+				print("Timeout expired")
+				logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
 				result = 1
 			if result != 0:
 				logAppend = "\nError during installation."
 	
 	# execute experiment
 	if result == 0:
-		print 'Executing...'
+		print('Executing...')
 		try:
 			result = subprocess32.call('python experiment.py',
 				shell=True,
@@ -178,19 +177,19 @@ def executeJob(uri, job_location):
 				timeout=maxSimTimeConfig,
 				cwd='./%s' % dirname)
 		except TimeoutExpired:
-			print "Timeout expired"
-			logAppend = "\nWorker Timeout Expired after " + str(maxSimTimeConfig) + "s"
+			print("Timeout expired")
+			logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
 			result = 1
 
-	log_content = open('./%s/log.txt' % dirname, 'r').read() + logAppend
+	log_content = open(f'./{dirname}/log.txt', 'r').read() + logAppend
 
 	if result == 0:
-		print 'Job was executed successfully!'
-		print 'Sending results to server...'
+		print('Job was executed successfully!')
+		print('Sending results to server...')
 
 		# handle binary files
 		try:
-			for binary_file in open('./%s/binary_files.txt' % dirname, 'r'):
+			for binary_file in open(f'./{dirname}/binary_files.txt', 'r'):
 				try:
 					global tokenForUri
 					headers = {
@@ -199,50 +198,50 @@ def executeJob(uri, job_location):
 					}
 
 					filename = binary_file.strip()
-					filename_full = './' + dirname + '/' + filename
+					filename_full = f'./{dirname}/{filename}'
 					# new connection per request, otherwise we get response not ready exceptions
 					server = httplib.HTTPConnection(uri)
-					server.request('POST', job_location + '/binaryfiles/' + filename, open(filename_full, 'rb'), headers)
+					server.request('POST', f'{job_location}/binaryfiles/{filename}', open(filename_full, 'rb'), headers)
 					file_response = server.getresponse()
 					file_status = file_response.status
 					if file_status == 200:
-						print "File send successfully!"
+						print("File send successfully!")
 					else:
-						print 'File could not be sent. (%s)' % file_status
-						print file_response.read()
+						print(f'File could not be sent. ({file_status})')
+						print(file_response.read())
 				except:
-					print "posting file failed"
+					print("posting file failed")
 					log_content += '\n---\nPosting file failed'
 		except:
-			print "no binary files sent to server"
-			log_content += '\n---\nNo binarz files sent to server'
+			print("no binary files sent to server")
+			log_content += '\n---\nNo binary files sent to server'
 
 		# handle experiment results and messages
 		server = httplib.HTTPConnection(uri)
 		try:
-			records = open('./%s/result.json' % dirname, 'r').read()
-			messages = open('./%s/messages.json' % dirname, 'r').read()
+			records = open(f'./{dirname}/result.json', 'r').read()
+			messages = open(f'./{dirname}/messages.json', 'r').read()
 		except:
 			records = "[]"
 			messages = "[]"
 			log_content += "\n---\nresult.json does not exist. Did you forget to call framework.stop()?"
 
 		payload = json.dumps({'Log': log_content, 'Records': json.loads(records), 'LogMessages': json.loads(messages)})
-		server.request('PUT', job_location + '/results', payload, getHeadersForUri(uri))
+		server.request('PUT', f'{job_location}/results', payload, getHeadersForUri(uri))
 		response = server.getresponse()
 		if response.status == 401 or response.status == 403:
 			raise WorkerNotRegisteredException
 		elif response.status == 200:
-			print 'Results sent successfully!'
+			print('Results sent successfully!')
 		else:
-			print 'Results could not be sent. (%s)' % response.status
-			print response.read()
+			print(f'Results could not be sent. ({response.status})')
+			print(response.read())
 	else:
-		print 'An error occured in experiment %s' % job_location
-		print log_content
+		print(f'An error occured in experiment {job_location}')
+		print(log_content)
 		error_payload = json.dumps({'ErrorLog':log_content})
 		server = httplib.HTTPConnection(uri)
-		server.request('PUT', job_location + '/error', error_payload, getHeadersForUri(uri))
+		server.request('PUT', f'{job_location}/error', error_payload, getHeadersForUri(uri))
 		response = server.getresponse()
 		if response.status == 401 or response.status == 403:
 			raise WorkerNotRegisteredException
@@ -255,16 +254,16 @@ def executeJob(uri, job_location):
 
 
 def spawn_worker_instance(arg):
-    os.system("python worker.py --backend " + str(serverUri) + " --capabilities " + str(capabilities) + " --maxidletime " + str(maxIdleTime) + " --maxsimtime " + str(maxSimTime))
+    os.system(f"python worker.py --backend {serverUri} --capabilities {capabilities} --maxidletime {maxIdleTime} --maxsimtime {maxSimTime}")
 
 if __name__ == '__main__':
 	configure()
 	
 	if numberOfWorker > 1:
-		print "Starting", numberOfWorker, "worker"
+		print(f"Starting {numberOfWorker} worker")
 		threads = []
 		for i in range(0, numberOfWorker):
-			print "Starting worker", i
+			print(f"Starting worker {i}")
 			thread = Thread(target = spawn_worker_instance, args = (10, ))
 			thread.start()
 			threads.append(thread)
@@ -278,11 +277,11 @@ if __name__ == '__main__':
 
 	lastJobTime = monotonic()
 	while True:
-		print '---'
-		print 'Max idle time: %s. Last job: %s, current time: %s. diff: %s' % (maxIdleTime, lastJobTime, monotonic(), monotonic() - lastJobTime)
+		print('---')
+		print(f'Max idle time: {maxIdleTime}. Last job: {lastJobTime}, current time: {monotonic()}. diff: {monotonic()-lastJobTime}')
 
-		if (maxIdleTime != -1 and monotonic() - lastJobTime > maxIdleTime):
-			print 'Max idle time (%s) has been exceeded. Last job: %s, current time: %s. Exiting...' % (maxIdleTime, lastJobTime, monotonic())
+		if maxIdleTime != -1 and monotonic() - lastJobTime > maxIdleTime:
+			print(f'Max idle time ({maxIdleTime}) has been exceeded. Last job: {lastJobTime}, current time: {monotonic()}. Exiting...')
 			sys.exit(1)
 
 		try:
@@ -300,6 +299,6 @@ if __name__ == '__main__':
 			# backend has probably rebooted --> register again
 			registerSelfAsWorker(serverUri)
 		except socket.error as e:
-			print 'Socket error occured. Maybe the server is not responding? (%s)' % repr(e)
+			print(f'Socket error occured. Maybe the server is not responding? ({e})')
 			# backend is probably offline --> wait some time and try again
 			sleep(120)
