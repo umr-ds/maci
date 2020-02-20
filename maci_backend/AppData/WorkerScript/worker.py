@@ -1,6 +1,7 @@
 ﻿#!/usr/bin/env python3
 
 from time import sleep, time
+import io
 import httplib
 import json
 import sys
@@ -8,7 +9,6 @@ import argparse
 import socket
 from pprint import pprint
 from zipfile import ZipFile
-from StringIO import StringIO
 from random import randint
 import subprocess
 import shutil
@@ -129,7 +129,7 @@ def executeJob(uri, job_location):
 	content = response.read()
 
 	# unzip to new folder
-	zipfile = ZipFile(StringIO(content))
+	zipfile = ZipFile(io.StringIO(content))
 	dirname = 'sim' + job_location.replace('/', '_')
 	zipfile.extractall(f'./{dirname}')
 
