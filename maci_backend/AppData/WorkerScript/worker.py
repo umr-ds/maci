@@ -11,8 +11,6 @@ from zipfile import ZipFile
 from StringIO import StringIO
 from random import randint
 import subprocess
-import subprocess32 # has timeout backport
-from subprocess32 import TimeoutExpired
 import shutil
 import hashlib
 import os.path
@@ -153,13 +151,13 @@ def executeJob(uri, job_location):
 		else:
 			print('Installing...')
 			try:
-				result = subprocess32.call('python install.py',
+				result = subprocess.call('python install.py',
 					shell=True,
 					stdout=logfile,
 					stderr=subprocess.STDOUT,
 					timeout=maxSimTimeConfig,
 					cwd='./%s' % dirname)
-			except TimeoutExpired:
+			except subprocess.TimeoutExpired:
 				print("Timeout expired")
 				logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
 				result = 1
@@ -170,13 +168,13 @@ def executeJob(uri, job_location):
 	if result == 0:
 		print('Executing...')
 		try:
-			result = subprocess32.call('python experiment.py',
+			result = subprocess.call('python experiment.py',
 				shell=True,
 				stdout=logfile,
 				stderr=subprocess.STDOUT,
 				timeout=maxSimTimeConfig,
 				cwd='./%s' % dirname)
-		except TimeoutExpired:
+		except subprocess.TimeoutExpired:
 			print("Timeout expired")
 			logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
 			result = 1
