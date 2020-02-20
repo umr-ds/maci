@@ -151,12 +151,12 @@ def executeJob(uri, job_location):
 		else:
 			print('Installing...')
 			try:
-				result = subprocess.call('python install.py',
+				result = subprocess.call('python3 install.py',
 					shell=True,
 					stdout=logfile,
 					stderr=subprocess.STDOUT,
 					timeout=maxSimTimeConfig,
-					cwd='./%s' % dirname)
+					cwd=f'./{dirname}')
 			except subprocess.TimeoutExpired:
 				print("Timeout expired")
 				logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
@@ -168,12 +168,12 @@ def executeJob(uri, job_location):
 	if result == 0:
 		print('Executing...')
 		try:
-			result = subprocess.call('python experiment.py',
+			result = subprocess.call('python3 experiment.py',
 				shell=True,
 				stdout=logfile,
 				stderr=subprocess.STDOUT,
 				timeout=maxSimTimeConfig,
-				cwd='./%s' % dirname)
+				cwd=f'./{dirname}')
 		except subprocess.TimeoutExpired:
 			print("Timeout expired")
 			logAppend = f"\nWorker Timeout Expired after {maxSimTimeConfig}s"
@@ -252,7 +252,7 @@ def executeJob(uri, job_location):
 
 
 def spawn_worker_instance(arg):
-    os.system(f"python worker.py --backend {serverUri} --capabilities {capabilities} --maxidletime {maxIdleTime} --maxsimtime {maxSimTime}")
+    os.system(f"python3 worker.py --backend {serverUri} --capabilities {capabilities} --maxidletime {maxIdleTime} --maxsimtime {maxSimTime}")
 
 if __name__ == '__main__':
 	configure()
