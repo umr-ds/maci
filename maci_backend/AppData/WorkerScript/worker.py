@@ -2,7 +2,7 @@
 
 from time import sleep, time
 import io
-import httplib
+import http.client
 import json
 import sys
 import argparse
@@ -74,7 +74,7 @@ def configure():
 
 def registerSelfAsWorker(uri):
 	global tokenForUri
-	server = httplib.HTTPConnection(uri)
+	server = http.client.HTTPConnection(uri)
 	registration_payload = json.dumps({'Capabilities': capabilities})
 	server.request('POST', '/workers', registration_payload, getHeadersForUri(uri))
 	response = server.getresponse()
@@ -89,7 +89,7 @@ def registerSelfAsWorker(uri):
 		pprint(response.read())
 
 def findAndExecutePendingJob(uri):
-	server = httplib.HTTPConnection(uri)
+	server = http.client.HTTPConnection(uri)
 	server.request('GET', '/random_job', headers=getHeadersForUri(uri))
 	response = server.getresponse()
 	location = response.getheader('Location')
@@ -123,7 +123,7 @@ def loadSimConfig(configFile):
 
 def executeJob(uri, job_location):
 	# download zip file with the experiment
-	server = httplib.HTTPConnection(uri)
+	server = http.client.HTTPConnection(uri)
 	server.request('GET', f'{job_location}/experiment.zip')
 	response = server.getresponse()
 	content = response.read()
@@ -198,7 +198,7 @@ def executeJob(uri, job_location):
 					filename = binary_file.strip()
 					filename_full = f'./{dirname}/{filename}'
 					# new connection per request, otherwise we get response not ready exceptions
-					server = httplib.HTTPConnection(uri)
+					server = http.client.HTTPConnection(uri)
 					server.request('POST', f'{job_location}/binaryfiles/{filename}', open(filename_full, 'rb'), headers)
 					file_response = server.getresponse()
 					file_status = file_response.status
@@ -215,7 +215,7 @@ def executeJob(uri, job_location):
 			log_content += '\n---\nNo binary files sent to server'
 
 		# handle experiment results and messages
-		server = httplib.HTTPConnection(uri)
+		server = http.client.HTTPConnection(uri)
 		try:
 			records = open(f'./{dirname}/result.json', 'r').read()
 			messages = open(f'./{dirname}/messages.json', 'r').read()
@@ -238,7 +238,7 @@ def executeJob(uri, job_location):
 		print(f'An error occured in experiment {job_location}')
 		print(log_content)
 		error_payload = json.dumps({'ErrorLog':log_content})
-		server = httplib.HTTPConnection(uri)
+		server = http.client.HTTPConnection(uri)
 		server.request('PUT', f'{job_location}/error', error_payload, getHeadersForUri(uri))
 		response = server.getresponse()
 		if response.status == 401 or response.status == 403:
