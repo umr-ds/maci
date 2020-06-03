@@ -20,7 +20,7 @@ from threading import Thread
 serverUri = "localhost:63658"
 capabilities = []
 maxIdleTime = 7200
-maxSimTime = 120 * 10
+maxSimTime = 2 * 60 * 60
 clearTmpDir = False
 numberOfWorker = 1
 
@@ -44,7 +44,7 @@ def configure():
     parser.add_argument("--second_backend", default="")
     parser.add_argument("--capabilities", default="", nargs="*")
     parser.add_argument("--maxidletime", default=7200, type=int)
-    parser.add_argument("--maxsimtime", default=120 * 10, type=int)
+    parser.add_argument("--maxsimtime", default=2 * 60 * 60, type=int)
     parser.add_argument("--no-clear-tmp-dir", dest="clear_tmp", action="store_false")
     parser.add_argument("--number-of-worker", dest="number_worker", default=1, type=int)
     parser.set_defaults(clear_tmp=True)
@@ -137,7 +137,10 @@ def executeJob(uri, job_location):
     logAppend = ""
     result = 0
 
-    maxSimTimeConfig = loadSimConfig(f"./{dirname}/config.json")
+    # TODO: Fix this in the backend
+    #  that does require to dig through the C# however, and I am not currently willing to do that
+    # maxSimTimeConfig = loadSimConfig(f"./{dirname}/config.json")
+    maxSimTimeConfig = None
     if maxSimTimeConfig is None:
         print(f"No individuel timeout... Fallback to default of {maxSimTime}")
         maxSimTimeConfig = maxSimTime
